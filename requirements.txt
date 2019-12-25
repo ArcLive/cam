@@ -1,0 +1,5 @@
+django
+moviepy
+celery
+gunicorn
+django-tinymce4-lite

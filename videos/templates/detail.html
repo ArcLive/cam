@@ -1,0 +1,93 @@
+{% extends "_layout.html" %}
+
+{% load static %}
+
+{% block content %}
+<style>
+    video {
+        width: 75%;
+        height: 75%
+    }
+
+    .card {
+        width: 100%;
+    }
+</style>
+<div class="text-center">
+    <div class="card" style="margin: auto;">
+        <div class="card-header">
+            <div class="option" style="float: left; width: 300px; text-align: left;">
+                <button type="button" class="btn btn-primary" onclick="location.href='/'">Back</button>
+            </div>
+            <div class="option" style="float: right; width: 300px;">
+                <button type="button" class="btn btn-primary" onclick="clipboard.writeText('{{ fullpath }}')">Copy fullpath</button>
+                {% if video.is_playback %}
+                    <button type="button" class="btn is_playback btn-primary" data-playback="1" data-pk="{{video.pk}}">Played back</button>
+                    <button type="button" class="btn is_playback btn-secondary" data-playback="0" data-pk="{{video.pk}}" style="display: none;">Un-Played back</button>
+                {% else %}
+                    <button type="button" class="btn is_playback btn-primary" data-playback="1" data-pk="{{video.pk}}" style="display: none;">Played back</button>
+                    <button type="button" class="btn is_playback btn-secondary" data-playback="0" data-pk="{{video.pk}}">Un-Played back</button>
+                {% endif %}
+            </div>
+            <h1>{{ video.video_path|slice:":-4" }}</h1>
+        </div>
+        <div class="card-body">
+            <video controls autoplay loop>
+                <source src="{% static 'videos/'|add:video.video_path %}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <form action="" method="post" class="margintop30">
+                {% csrf_token %}
+                {{ form }}
+                <button type="submit" id="email_send" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type='text/javascript'>
+    var token = '{{csrf_token}}';
+    $('#email_send').click(function(e) {
+        e.preventDefault();
+        $.ajax({
+            headers: { "X-CSRFToken": token },
+            type: "POST",
+            data: {
+                'email': $('#id_email').val(),
+            },
+            url: "{% url 'detail'  video_id=video.id %}",
+            success: function(result) {
+                alert('Email sent...')
+                window.location.href = "{% url 'index' %}"
+            },
+            error: function(result) {
+                alert('Email fail to send...')
+            },
+        });
+    });
+    $('.is_playback').click(function(e) {
+        if ($(this).data('playback')) {
+            $('[data-playback="1"]').hide();
+            $('[data-playback="0"]').show();
+        } else {
+            $('[data-playback="0"]').hide();
+            $('[data-playback="1"]').show();
+        }
+        $.ajax({
+            headers: { "X-CSRFToken": token },
+            type: "POST",
+            data: {
+                'pk': $(this).data('pk'),
+                'is_playback': $(this).data('playback') ? '' : 'checked'
+            },
+            url: "{% url 'playback' %}",
+            success: function(result) {
+                console.log('Updated is_playback');
+            },
+            error: function(result) {
+                console.log('Failed to update is_playback');
+            },
+        });
+    });
+</script>
+{% endblock %}
